@@ -5,22 +5,26 @@ import com.jwt.auth.jwtpractice.jwt.JwtAuthenticationEntryPoint;
 import com.jwt.auth.jwtpractice.jwt.JwtSecurityConfig;
 import com.jwt.auth.jwtpractice.jwt.TokenProvider;
 
+import io.jsonwebtoken.Jwt;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.token.TokenService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
 
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+@Configuration
+public class SecurityConfig {
     private final TokenProvider tokenProvider;
 //    private final CorsFilter corsFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -39,26 +43,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
     }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-//    @Override
-//    public void configure(WebSecurity web) {
-//        web.ignoring()
-//                .antMatchers(
-//                        "/h2-console/**"
-//                        ,"/favicon.ico"
-//                        ,"/error"
-//                );
-//    }
-
-    @Override
-    protected void configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity
-                // token을 사용하는 방식이기 때문에 csrf를 disable합니다.
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                // token을 사용하는 방식이기 때문에 csrf를 disable
                 .csrf().disable()
 //                .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling()
@@ -86,5 +79,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .and()
                 .apply(new JwtSecurityConfig(tokenProvider));
+        return http.build();
     }
 }
